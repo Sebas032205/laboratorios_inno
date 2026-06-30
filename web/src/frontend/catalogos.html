@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración de Catálogos - Lab Inno</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .dashboard-layout { display: none; }
+        .row { display: flex; gap: 20px; margin-top: 20px; }
+        .col { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .form-inline { display: flex; gap: 10px; margin-bottom: 15px; }
+        .form-inline input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .form-inline button { width: auto; padding: 8px 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-layout" id="dashboardLayout">
+        <div class="sidebar">
+            <h2>Lab Inno</h2>
+            <a href="dashboard.html">Inicio (Dashboard)</a>
+            <a href="catalogos.phph" class="active">Categorías / Ubicaciones</a>
+            <a href="inventario.html">Inventario (Activos)</a>
+            <a href="prestamos.php">Préstamos</a>
+            <a href="auditoria.php">Auditoría</a>
+        </div>
+
+        <div class="content">
+            <div class="header">
+                <h1>Gestión de Catálogos Maestros</h1>
+                <div>
+                    <span id="txtUsuario">Cargando...</span>
+                    <button class="logout-btn" id="btnCerrarSesion">Cerrar Sesión</button>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <h3>Categorías (Ej. Sensores, VR)</h3>
+                    <form id="formCategoria" class="form-inline">
+                        <input type="text" id="inputCategoria" placeholder="Nueva categoría..." required>
+                        <button type="submit" class="btn-primary">Agregar</button>
+                    </form>
+                    <table>
+                        <thead>
+                            <tr><th>ID</th><th>Nombre de Categoría</th></tr>
+                        </thead>
+                        <tbody id="tablaCategorias"></tbody>
+                    </table>
+                </div>
+
+                <div class="col">
+                    <h3>Ubicaciones (Ej. Lab 7, Almacén)</h3>
+                    <form id="formUbicacion" class="form-inline">
+                        <input type="text" id="inputUbicacion" placeholder="Nueva ubicación..." required>
+                        <button type="submit" class="btn-primary">Agregar</button>
+                    </form>
+                    <table>
+                        <thead>
+                            <tr><th>ID</th><th>Nombre de Ubicación</th></tr>
+                        </thead>
+                        <tbody id="tablaUbicaciones"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="javascript/catalogos.js"></script>
+</body>
+</html>

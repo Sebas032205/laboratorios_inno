@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # SERVICIO 1: El Servidor Web (Apache + PHP)
+  web:
+    build: ./web
+    container_name: servidor_apache
+    ports:
+      - "80:80" # Mapea el puerto 80 de Azure al puerto 80 del contenedor
+    volumes:
+      - ./web/src:/var/www/html # Sincroniza tu carpeta local 'src' con Apache
+    depends_on:
+      - db # Espera a que el contenedor 'db' inicie antes de levantar Apache
+    networks:
+      - red_sistema_web
+
+  # SERVICIO 2: La Base de Datos (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: base_mysql
+    # Esta línea asegura compatibilidad de contraseñas con versiones de PHP
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: laboratorios
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: 1234
+    volumes:
+      - datos_mysql:/var/lib/mysql # Mantiene tus tablas y datos a salvo en la VM
+    networks:
+      - red_sistema_web
+
+# Volúmenes para persistencia de datos fuera de los contenedores
+volumes:
+  datos_mysql:
+
+# Red virtual interna para aislar los contenedores
+networks:
+  red_sistema_web:

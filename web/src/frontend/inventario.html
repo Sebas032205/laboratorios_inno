@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Activos - Lab Inno</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .dashboard-layout { display: none; }
+        .grid-inventario { display: flex; flex-direction: column; gap: 25px; margin-top: 20px; }
+        .card-formulario { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card-tabla { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; }
+        .form-item { flex: 1; min-width: 200px; display: flex; flex-direction: column; }
+        .form-item label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .form-item input, .form-item select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: white; }
+        .btn-submit-container { display: flex; align-items: flex-end; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 12px; text-align: left; }
+        th { background-color: #f8f9fa; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .badge-disponible { background-color: #d4edda; color: #155724; }
+        .badge-prestado { background-color: #fff3cd; color: #856404; }
+        .badge-mantenimiento { background-color: #cce5ff; color: #004085; }
+        .badge-baja { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-layout" id="dashboardLayout">
+        <div class="sidebar">
+            <h2>Lab Inno</h2>
+            <a href="dashboard.html">Inicio (Dashboard)</a>
+            <a href="catalogos.html">Categorías / Ubicaciones</a>
+            <a href="inventario.php" class="active">Inventario (Activos)</a>
+            <a href="prestamos.php">Préstamos</a>
+            <a href="auditoria.php">Auditoría</a>
+        </div>
+
+        <div class="content">
+            <div class="header">
+                <h1>Control de Inventario</h1>
+                <div>
+                    <span id="txtUsuario">Cargando...</span>
+                    <button class="logout-btn" id="btnCerrarSesion">Cerrar Sesión</button>
+                </div>
+            </div>
+
+            <div class="grid-inventario">
+                <div class="card-formulario">
+                    <h3>Registrar Nuevo Activo</h3>
+                    <form id="formRegistrarActivo">
+                        <div class="form-row">
+                            <div class="form-item">
+                                <label for="nombreActivo">Nombre del Dispositivo:</label>
+                                <input type="text" id="nombreActivo" placeholder="Ej. Arduino Uno R3" required>
+                            </div>
+                            <div class="form-item">
+                                <label for="numSerie">Número de Serie único:</label>
+                                <input type="text" id="numSerie" placeholder="Ej. SN-ARD-9942" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-item">
+                                <label for="selectCategoria">Categoría:</label>
+                                <select id="selectCategoria" required>
+                                    <option value="">Cargando opciones...</option>
+                                </select>
+                            </div>
+                            <div class="form-item">
+                                <label for="selectUbicacion">Ubicación Física:</label>
+                                <select id="selectUbicacion" required>
+                                    <option value="">Cargando opciones...</option>
+                                </select>
+                            </div>
+                            <div class="btn-submit-container">
+                                <button type="submit" class="btn-primary" style="height: 38px; width: 140px;">Guardar Activo</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-tabla">
+                    <h3>Equipos en Sistema</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Nº Serie</th>
+                                <th>Categoría</th>
+                                <th>Ubicación</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaActivos">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="javascript/inventario.js"></script>
+</body>
+</html>
