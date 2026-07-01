@@ -8,7 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Bloqueo de seguridad dinámico y silencioso exclusivo para el rol 'admin'
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header("Location: ../index.html");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -58,7 +58,9 @@ $lista_logs = $conn->query($sql_logs);
             <a href="catalogos.php">Categorías / Ubicaciones</a>
             <a href="inventario.php">Inventario (Activos)</a>
             <a href="prestamos.php">Préstamos</a>
-            <a href="auditoria.php" class="active">Auditoría</a>
+            <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
+                <a href="auditoria.php">Auditoría</a>
+            <?php endif; ?>
         </div>
 
         <div class="content" style="flex: 1; padding: 20px;">

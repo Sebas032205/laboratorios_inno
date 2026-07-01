@@ -13,24 +13,64 @@ if (!isset($_SESSION['usuario_id'])) {
     exit;
 }
 
-// 2. Incluir la conexión a la base de datos
+// 2. Incluir las conexiones
 require_once '../backend/conexion.php';
+require_once '../backend/conexion_redis.php'; // <-- NUEVA CONEXIÓN A REDIS
 
-// 3. Consultar listado de usuarios con rol 'usuario' (alumnos/profesores) para el préstamo
-$usuarios_opt = $conn->query("SELECT id, nombre FROM usuarios WHERE rol = 'usuario' ORDER BY nombre ASC");
+// 3. LÓGICA REDIS: Consultar listado de usuarios (alumnos/profesores)
+$usuarios_opt = array();
+$datos_usr = (isset($redis_disponible) && $redis_disponible) ? $redis->get('catalogo_usuarios_prestamo') : false;
 
-// 4. Consultar ÚNICAMENTE los activos que estén 'DISPONIBLE'
-$activos_disponibles = $conn->query("SELECT id, nombre, numero_serie FROM activos WHERE estado = 'DISPONIBLE' ORDER BY nombre ASC");
+if ($datos_usr) {
+    $usuarios_opt = json_decode($datos_usr, true);
+} else {
+    $res_usr = $conn->query("SELECT id, nombre FROM usuarios WHERE rol = 'usuario' ORDER BY nombre ASC");
+    if ($res_usr) {
+        while ($r = $res_usr->fetch_assoc()) $usuarios_opt[] = $r;
+    }
+    if (isset($redis_disponible) && $redis_disponible) {
+        $redis->setex('catalogo_usuarios_prestamo', 3600, json_encode($usuarios_opt));
+    }
+}
 
-// 5. Consultar el historial de movimientos (Préstamos y Devoluciones) con INNER JOINs enriquecidos
-$sql_movimientos = "SELECT m.id, m.tipo_evento, m.fecha_registro, 
-                           a.nombre AS activo_nombre, a.numero_serie,
-                           u.nombre AS usuario_nombre
-                    FROM movimientos_activos m
-                    INNER JOIN activos a ON m.activo_id = a.id
-                    INNER JOIN usuarios u ON m.usuario_id = u.id
-                    ORDER BY m.id DESC";
-$lista_movimientos = $conn->query($sql_movimientos);
+// 4. LÓGICA REDIS: Consultar ÚNICAMENTE los activos que estén 'DISPONIBLE'
+$activos_disponibles = array();
+$datos_act = (isset($redis_disponible) && $redis_disponible) ? $redis->get('lista_activos_disponibles') : false;
+
+if ($datos_act) {
+    $activos_disponibles = json_decode($datos_act, true);
+} else {
+    $res_act = $conn->query("SELECT id, nombre, numero_serie FROM activos WHERE estado = 'DISPONIBLE' ORDER BY nombre ASC");
+    if ($res_act) {
+        while ($r = $res_act->fetch_assoc()) $activos_disponibles[] = $r;
+    }
+    if (isset($redis_disponible) && $redis_disponible) {
+        $redis->setex('lista_activos_disponibles', 3600, json_encode($activos_disponibles));
+    }
+}
+
+// 5. LÓGICA REDIS: Consultar el historial de movimientos (JOIN de 3 tablas)
+$lista_movimientos = array();
+$datos_movs = (isset($redis_disponible) && $redis_disponible) ? $redis->get('historial_movimientos') : false;
+
+if ($datos_movs) {
+    $lista_movimientos = json_decode($datos_movs, true);
+} else {
+    $sql_movimientos = "SELECT m.id, m.tipo_evento, m.fecha_registro, 
+                               a.nombre AS activo_nombre, a.numero_serie,
+                               u.nombre AS usuario_nombre
+                        FROM movimientos_activos m
+                        INNER JOIN activos a ON m.activo_id = a.id
+                        INNER JOIN usuarios u ON m.usuario_id = u.id
+                        ORDER BY m.id DESC";
+    $res_movs = $conn->query($sql_movimientos);
+    if ($res_movs) {
+        while ($r = $res_movs->fetch_assoc()) $lista_movimientos[] = $r;
+    }
+    if (isset($redis_disponible) && $redis_disponible) {
+        $redis->setex('historial_movimientos', 3600, json_encode($lista_movimientos));
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -64,7 +104,9 @@ $lista_movimientos = $conn->query($sql_movimientos);
             <a href="catalogos.php">Categorías / Ubicaciones</a>
             <a href="inventario.php">Inventario (Activos)</a>
             <a href="prestamos.php" class="active">Préstamos</a>
-            <a href="auditores.php">Auditoría</a>
+            <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
+                <a href="auditoria.php">Auditoría</a>
+            <?php endif; ?>
         </div>
 
         <div class="content" style="flex: 1; padding: 20px;">
@@ -96,9 +138,9 @@ $lista_movimientos = $conn->query($sql_movimientos);
                                 <label for="usuario_id">Solicitante (Usuario):</label>
                                 <select id="usuario_id" name="usuario_id" required>
                                     <option value="">-- Seleccione el Alumno/Profesor --</option>
-                                    <?php while ($usr = $usuarios_opt->fetch_assoc()): ?>
+                                    <?php foreach ($usuarios_opt as $usr): ?>
                                         <option value="<?php echo $usr['id']; ?>"><?php echo htmlspecialchars($usr['nombre']); ?></option>
-                                    <?php endwhile; ?>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             
@@ -106,11 +148,11 @@ $lista_movimientos = $conn->query($sql_movimientos);
                                 <label for="activo_id">Equipo Disponible:</label>
                                 <select id="activo_id" name="activo_id" required>
                                     <option value="">-- Seleccione un Activo Libre --</option>
-                                    <?php while ($act = $activos_disponibles->fetch_assoc()): ?>
+                                    <?php foreach ($activos_disponibles as $act): ?>
                                         <option value="<?php echo $act['id']; ?>">
                                             <?php echo htmlspecialchars($act['nombre']); ?> [S/N: <?php echo htmlspecialchars($act['numero_serie']); ?>]
                                         </option>
-                                    <?php endwhile; ?>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
@@ -133,8 +175,8 @@ $lista_movimientos = $conn->query($sql_movimientos);
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if ($lista_movimientos && $lista_movimientos->num_rows > 0): ?>
-                                <?php while ($row = $lista_movimientos->fetch_assoc()): ?>
+                            <?php if (!empty($lista_movimientos)): ?>
+                                <?php foreach ($lista_movimientos as $row): ?>
                                     <tr>
                                         <td>#<?php echo $row['id']; ?></td>
                                         <td><strong><?php echo htmlspecialchars($row['activo_nombre']); ?></strong></td>
@@ -142,12 +184,12 @@ $lista_movimientos = $conn->query($sql_movimientos);
                                         <td><?php echo htmlspecialchars($row['usuario_nombre']); ?></td>
                                         <td>
                                             <span class="badge badge-<?php echo strtolower($row['tipo_evento']); ?>">
-                                                <?php echo $row['tipo_evento']; ?>
+                                                <?php echo htmlspecialchars($row['tipo_evento']); ?>
                                             </span>
                                         </td>
-                                        <td><?php echo $row['fecha_registro']; ?></td>
+                                        <td><?php echo htmlspecialchars($row['fecha_registro']); ?></td>
                                     </tr>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
                                     <td colspan="6" style="text-align: center; color: #999; padding: 20px;">

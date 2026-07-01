@@ -1,67 +1,87 @@
 <?php
-// web/src/backend/api_catalogos.php
-
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST");
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once 'conexion.php';
+require_once 'conexion_redis.php';
 session_start();
 
-// SEGURIDAD: Solo usuarios logueados pueden interactuar con los catálogos
 if (!isset($_SESSION['usuario_id'])) {
     http_response_code(401);
     echo json_encode(['error' => 'No autorizado. Inicie sesión.']);
     exit;
 }
 
-// Validar qué catálogo se está solicitando
-$tabla = isset($_GET['tabla']) ? $_GET['tabla'] : '';
-if ($tabla !== 'categorias' && $tabla !== 'ubicaciones') {
+$tabla = isset($_GET['tabla']) ? trim($_GET['tabla']) : '';
+$tablas_permitidas = ['categorias', 'ubicaciones'];
+
+if (!in_array($tabla, $tablas_permitidas, true)) {
     http_response_code(400);
     echo json_encode(['error' => 'Catálogo no válido. Use categorias o ubicaciones.']);
     exit;
 }
 
+$clave_cache = 'catalogo_' . $tabla;
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 switch ($metodo) {
     case 'GET':
-        try {
-            // Consultar todos los registros de la tabla solicitada
-            $stmt = $pdo->query("SELECT id, nombre FROM $tabla ORDER BY nombre ASC");
-            $resultados = $stmt->fetchAll();
-            
+        $datos_cacheados = false;
+        if (!empty($redis_disponible) && $redis_disponible) {
+            $datos_cacheados = $redis->get($clave_cache);
+        }
+
+        if ($datos_cacheados !== false && $datos_cacheados !== '') {
             http_response_code(200);
-            echo json_encode($resultados);
-        } catch (\PDOException $e) {
+            echo $datos_cacheados;
+            exit;
+        }
+
+        try {
+            $stmt = $conn->prepare("SELECT id, nombre FROM " . $tabla . " ORDER BY nombre ASC");
+            $stmt->execute();
+            $resultados = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+            $json_respuesta = json_encode($resultados);
+
+            if (!empty($redis_disponible) && $redis_disponible) {
+                $redis->setex($clave_cache, 3600, $json_respuesta);
+            }
+
+            http_response_code(200);
+            echo $json_respuesta;
+        } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Error al consultar los datos.']);
         }
         break;
 
     case 'POST':
-        // Leer el JSON del frontend
-        $json = file_get_contents("php://input");
-        $data = json_decode($json);
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
 
-        if (!isset($data->nombre) || empty(trim($data->nombre))) {
+        if (!is_array($data) || !isset($data['nombre']) || trim((string) $data['nombre']) === '') {
             http_response_code(400);
             echo json_encode(['error' => 'El nombre es obligatorio.']);
             exit;
         }
 
-        $nombre = trim($data->nombre);
+        $nombre = trim((string) $data['nombre']);
 
         try {
-            // Insertar de forma segura usando sentencias preparadas
-            $stmt = $pdo->prepare("INSERT INTO $tabla (nombre) VALUES (:nombre)");
-            $stmt->execute([':nombre' => $nombre]);
+            $stmt = $conn->prepare("INSERT INTO " . $tabla . " (nombre) VALUES (?)");
+            $stmt->bind_param('s', $nombre);
+            $stmt->execute();
+
+            if (!empty($redis_disponible) && $redis_disponible) {
+                $redis->del($clave_cache);
+            }
 
             http_response_code(201);
             echo json_encode(['mensaje' => 'Registro agregado con éxito a ' . $tabla]);
-        } catch (\PDOException $e) {
+        } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Error al insertar en la base de datos.']);
         }
