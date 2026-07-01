@@ -1,5 +1,9 @@
 <?php
-// web/src/frontend/prestamos.php
+// PON ESTO HASTA ARRIBA DE TUS VISTAS (dashboard.php, prestamos.php, mis_prestamos.php)
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
 
 // 1. Validar la sesión en el servidor
 if (session_status() === PHP_SESSION_NONE) {
@@ -114,7 +118,7 @@ if ($datos_movs) {
                 <h1>Gestión de Préstamos y Trazabilidad</h1>
                 <div>
                     <span style="font-weight: bold; background: #e2e8f0; padding: 5px 10px; border-radius: 4px; margin-right: 10px;">
-                        PERSONAL: <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
+                        Nombre: <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
                     </span>
                     <a href="../backend/logout.php" class="logout-btn" style="text-decoration: none;">Cerrar Sesión</a>
                 </div>
@@ -132,7 +136,7 @@ if ($datos_movs) {
                 <?php if ($_SESSION['usuario_rol'] === 'admin' || $_SESSION['usuario_rol'] === 'tecnico'): ?>
                 <div class="form-tarjeta">
                     <h3>Registrar Salida de Equipo</h3>
-                    <form action="../backend/procesar_prestamo.php" method="POST">
+                    <form action="../backend/procesar_prestamos.php" method="POST">
                         <div class="form-row">
                             <div class="form-field">
                                 <label for="usuario_id">Solicitante (Usuario):</label>

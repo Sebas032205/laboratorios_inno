@@ -15,7 +15,6 @@ $email    = isset($_POST['email']) ? trim($_POST['email']) : '';
 $password = isset($_POST['password']) ? trim($_POST['password']) : '';
 
 if (empty($email) || empty($password)) {
-    // CORRECCIÓN: Cambiado index.php a index.html
     header("Location: ../index.php?error=" . urlencode("Por favor, rellene todos los campos."));
     exit;
 }
@@ -38,17 +37,25 @@ try {
         $_SESSION['usuario_nombre'] = $usuario['nombre'];
         $_SESSION['usuario_rol']    = $usuario['rol'];
 
-        // Redirección exitosa al dashboard dinámico protegido
-        header("Location: ../frontend/dashboard.php");
+        // ========================================================
+        // ENRUTADOR INTELIGENTE SEGÚN EL ROL DEL USUARIO
+        // ========================================================
+        if ($_SESSION['usuario_rol'] === 'admin' || $_SESSION['usuario_rol'] === 'tecnico') {
+            // Si es Personal de control, va al Dashboard global
+            header("Location: ../frontend/dashboard.php");
+        } else {
+            // Si es un Alumno o Profesor ('usuario'), va directo a su panel personal
+            header("Location: ../frontend/panel_usuario.php");
+        }
         exit;
+        // ========================================================
+
     } else {
-        // CORRECCIÓN: Cambiado index.php a index.html
         header("Location: ../index.php?error=" . urlencode("El correo o la contraseña son incorrectos."));
         exit;
     }
 } catch (\Exception $e) {
     // 5. Captura general de errores/excepciones de MySQLi
-    // CORRECCIÓN: Cambiado index.php a index.html
     header("Location: ../index.php?error=" . urlencode("Error en la base de datos: " . $e->getMessage()));
     exit;
 }

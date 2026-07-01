@@ -1,5 +1,9 @@
 <?php
-// web/src/frontend/dashboard.php
+// PON ESTO HASTA ARRIBA DE TUS VISTAS (dashboard.php, prestamos.php, mis_prestamos.php)
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -83,7 +87,7 @@ if ($res = $conn->query("SELECT COUNT(*) AS total_ubicaciones FROM ubicaciones")
                 <h1>Bienvenido, <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?></h1>
                 <div>
                     <span style="font-weight: bold; background: #e2e8f0; padding: 5px 10px; border-radius: 4px; margin-right: 10px;">
-                        ROL: <?php echo strtoupper($_SESSION['usuario_rol']); ?>
+                        Nombre: <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
                     </span>
                     <a href="../backend/logout.php" class="logout-btn" style="text-decoration: none; display: inline-block;">Cerrar Sesión</a>
                 </div>

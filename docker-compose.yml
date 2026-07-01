@@ -1,17 +1,17 @@
 version: '3.8'
 
 services:
-  # SERVICIO 1: El Servidor Web (Apache + PHP)
+  # SERVICIO 1: El Servidor Web (Apache + PHP 8.2)
   web:
     build: ./web
     container_name: servidor_apache
     ports:
-      - "80:80" # Mapea el puerto 80 de Azure al puerto 80 del contenedor
+      - "80:80" # Mapea el puerto 80 local al puerto 80 del contenedor
     volumes:
       - ./web/src:/var/www/html # Sincroniza tu carpeta local 'src' con Apache
     depends_on:
-      - db # Espera a que el contenedor 'db' inicie antes de levantar Apache
-      - redis_cache # Tamién espera a que inicie el caché
+      - db
+      - redis_cache # Apache esperará a que MySQL y Redis estén listos antes de iniciar
     networks:
       - red_sistema_web
 
@@ -22,27 +22,42 @@ services:
     # Esta línea asegura compatibilidad de contraseñas con versiones de PHP
     command: --default-authentication-plugin=mysql_native_password
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: "1234"
       MYSQL_DATABASE: laboratorios
       MYSQL_USER: usuario
-      MYSQL_PASSWORD: 1234
+      MYSQL_PASSWORD: "1234"
     volumes:
-      - datos_mysql:/var/lib/mysql # Mantiene tus tablas y datos a salvo en la VM
+      - datos_mysql:/var/lib/mysql # Mantiene tus tablas y datos a salvo
     networks:
       - red_sistema_web
 
-  # SERVICIO 3: El Caché (Redis) - ¡NUEVO!
+  # SERVICIO 3: Sistema de Caché (Redis)
   redis_cache:
-    image: redis:alpine
+    image: redis:7-alpine # Versión Alpine, ultra ligera y rápida
     container_name: redis_cache
     ports:
-      - "6379:6379" # Mapea el puerto por defecto de Redis
+      - "6379:6379" # Puerto por defecto de Redis (útil si quieres auditarlo desde fuera)
     networks:
-      - red_sistema_web # Lo conectamos a la misma red para que Apache pueda verlo
+      - red_sistema_web
+
+  # SERVICIO 4: Panel de Monitoreo Grafico (Portainer)
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: panel_portainer
+    restart: always
+    ports:
+      - "9000:9000" # Interfaz HTTP estándar (perfecta para desarrollo local)
+      - "9443:9443" # Interfaz HTTPS segura
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Permite a Portainer leer tus contenedores locales
+      - datos_portainer:/data # Guarda tus usuarios y configuraciones de Portainer
+    networks:
+      - red_sistema_web
 
 # Volúmenes para persistencia de datos fuera de los contenedores
 volumes:
   datos_mysql:
+  datos_portainer: # Nuevo volumen para proteger los datos de Portainer
 
 # Red virtual interna para aislar los contenedores
 networks:

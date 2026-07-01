@@ -1,5 +1,9 @@
 <?php
-// web/src/frontend/catalogos.php
+// PON ESTO HASTA ARRIBA DE TUS VISTAS (dashboard.php, prestamos.php, mis_prestamos.php)
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
 
 // 1. Asegurar y validar la sesión en el servidor
 if (session_status() === PHP_SESSION_NONE) {
@@ -255,8 +259,8 @@ if ($datos_ubi_redis) {
                     }
                     ?>
 
-                    <span style="font-weight: bold; background: <?php echo $color_fondo; ?>; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px;">
-                        <?php echo $texto_badge; ?>: <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
+                    <span style="font-weight: bold; background: #e2e8f0; padding: 5px 10px; border-radius: 4px; margin-right: 10px;">
+                        Nombre: <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
                     </span>
                     <a href="../backend/logout.php" class="logout-btn" style="text-decoration: none;">Cerrar Sesión</a>
                 </div>
