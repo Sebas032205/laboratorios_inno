@@ -47,7 +47,7 @@ try {
     $stmt->execute();
 
     // MEJORA: Redirigir al login principal avisando que ya puede iniciar sesión
-    header("Location: ../index.html?mensaje=" . urlencode("¡Usuario registrado exitosamente! Ya puede iniciar sesión."));
+    header("Location: ../index.php?mensaje=" . urlencode("¡Usuario registrado exitosamente!..."));
     exit;
 
 } catch (\Exception $e) {

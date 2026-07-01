@@ -8,7 +8,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Bloqueo de seguridad: solo personal autorizado puede gestionar préstamos
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: ../index.html?error=" . urlencode("Acceso denegado. Por favor, inicie sesión."));
+    // Redirigir al login de forma directa y silenciosa, sin mostrar errores en la URL
+    header("Location: ../index.php");
     exit;
 }
 
@@ -63,7 +64,7 @@ $lista_movimientos = $conn->query($sql_movimientos);
             <a href="catalogos.php">Categorías / Ubicaciones</a>
             <a href="inventario.php">Inventario (Activos)</a>
             <a href="prestamos.php" class="active">Préstamos</a>
-            <a href="auditoria.php">Auditoría</a>
+            <a href="auditores.php">Auditoría</a>
         </div>
 
         <div class="content" style="flex: 1; padding: 20px;">

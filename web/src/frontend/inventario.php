@@ -8,7 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Bloqueo de seguridad
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: ../index.html?error=" . urlencode("Acceso denegado. Por favor, inicie sesión."));
+    header("Location: ../index.php");
     exit;
 }
 
@@ -93,7 +93,7 @@ $lista_activos = $conn->query($sql_activos);
             <a href="catalogos.php">Categorías / Ubicaciones</a>
             <a href="inventario.php" class="active">Inventario (Activos)</a>
             <a href="prestamos.php">Préstamos</a>
-            <a href="auditoria.php">Auditoría</a>
+            <a href="auditores.php">Auditoría</a>
         </div>
 
         <div class="content" style="flex: 1; padding: 20px;">
@@ -101,7 +101,7 @@ $lista_activos = $conn->query($sql_activos);
                 <h1>Inventario de Activos Tecnológicos</h1>
                 <div>
                     <span style="font-weight: bold; background: #e2e8f0; padding: 5px 10px; border-radius: 4px; margin-right: 10px;">
-                        USUARIO: <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
+                        ROl: <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
                     </span>
                     <a href="../backend/logout.php" class="logout-btn" style="text-decoration: none;">Cerrar Sesión</a>
                 </div>

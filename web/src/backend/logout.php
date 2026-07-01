@@ -20,8 +20,6 @@ if (ini_get("session_use_cookies")) {
 // 3. Destruir la sesión físicamente en el servidor
 session_destroy();
 
-// 4. Redirigir limpiamente al login raíz pasándole un estado de éxito por URL
-// CORRECCIÓN: Cambiado index.php a index.html
-header("Location: ../index.html?mensaje=" . urlencode("Sesión cerrada correctamente."));
+header("Location: ../index.php");
 exit;
 ?>

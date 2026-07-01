@@ -16,7 +16,7 @@ $password = isset($_POST['password']) ? trim($_POST['password']) : '';
 
 if (empty($email) || empty($password)) {
     // CORRECCIÓN: Cambiado index.php a index.html
-    header("Location: ../index.html?error=" . urlencode("Por favor, rellene todos los campos."));
+    header("Location: ../index.php?error=" . urlencode("Por favor, rellene todos los campos."));
     exit;
 }
 
@@ -43,13 +43,13 @@ try {
         exit;
     } else {
         // CORRECCIÓN: Cambiado index.php a index.html
-        header("Location: ../index.html?error=" . urlencode("El correo o la contraseña son incorrectos."));
+        header("Location: ../index.php?error=" . urlencode("El correo o la contraseña son incorrectos."));
         exit;
     }
 } catch (\Exception $e) {
     // 5. Captura general de errores/excepciones de MySQLi
     // CORRECCIÓN: Cambiado index.php a index.html
-    header("Location: ../index.html?error=" . urlencode("Error en la base de datos: " . $e->getMessage()));
+    header("Location: ../index.php?error=" . urlencode("Error en la base de datos: " . $e->getMessage()));
     exit;
 }
 ?>

@@ -6,8 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // SEGURIDAD AUTOMÁTICA: Si no hay variable de sesión, lo expulsa directamente al login raíz
 if (!isset($_SESSION['usuario_id'])) {
-    // CORRECCIÓN: Cambiado index.php a index.html
-    header("Location: ../index.html?error=" . urlencode("Acceso denegado. Inicie sesión."));
+    header("Location: ../index.php");
     exit;
 }
 ?>

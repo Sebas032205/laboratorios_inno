@@ -6,9 +6,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Bloqueo de seguridad: La auditoría suele ser exclusiva para el rol 'admin'
+// Bloqueo de seguridad dinámico y silencioso exclusivo para el rol 'admin'
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header("Location: dashboard.php?error=" . urlencode("Acceso denegado. Solo los administradores pueden ver los logs de auditoría."));
+    header("Location: ../index.html");
     exit;
 }
 
@@ -64,9 +64,31 @@ $lista_logs = $conn->query($sql_logs);
         <div class="content" style="flex: 1; padding: 20px;">
             <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h1>Pistas de Auditoría del Sistema</h1>
+                
                 <div>
-                    <span style="font-weight: bold; background: #dc2626; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px;">
-                        ADMIN: <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
+                    <?php 
+                    // Obtener el rol actual de la sesión (por defecto usuario si no existiera)
+                    $rol_actual = $_SESSION['usuario_rol'] ?? 'usuario';
+                    
+                    // Definir dinámicamente el color de fondo y el texto según el rol del usuario logueado
+                    switch ($rol_actual) {
+                        case 'admin':
+                            $color_fondo = '#dc2626'; // Rojo vibrante para Admin
+                            $texto_badge = 'ADMIN';
+                            break;
+                        case 'tecnico':
+                            $color_fondo = '#0284c7'; // Azul / Celeste profesional para Técnico
+                            $texto_badge = 'TÉCNICO';
+                            break;
+                        default:
+                            $color_fondo = '#64748b'; // Gris elegante para Usuario común
+                            $texto_badge = 'USUARIO';
+                            break;
+                    }
+                    ?>
+
+                    <span style="font-weight: bold; background: <?php echo $color_fondo; ?>; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px;">
+                        <?php echo $texto_badge; ?>: <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
                     </span>
                     <a href="../backend/logout.php" class="logout-btn" style="text-decoration: none;">Cerrar Sesión</a>
                 </div>
@@ -112,7 +134,6 @@ $lista_logs = $conn->query($sql_logs);
                                     <td>
                                         <?php if (!empty($row['valores_antiguos']) && $row['valores_antiguos'] !== 'null'): ?>
                                             <pre class="json-block"><?php 
-                                                // Decodificar y volver a formatear de forma bonita el JSON
                                                 $json_antiguo = json_decode($row['valores_antiguos'], true);
                                                 echo htmlspecialchars(json_encode($json_antiguo, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)); 
                                             ?></pre>

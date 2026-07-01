@@ -11,6 +11,7 @@ services:
       - ./web/src:/var/www/html # Sincroniza tu carpeta local 'src' con Apache
     depends_on:
       - db # Espera a que el contenedor 'db' inicie antes de levantar Apache
+      - redis_cache # Tamién espera a que inicie el caché
     networks:
       - red_sistema_web
 
@@ -29,6 +30,15 @@ services:
       - datos_mysql:/var/lib/mysql # Mantiene tus tablas y datos a salvo en la VM
     networks:
       - red_sistema_web
+
+  # SERVICIO 3: El Caché (Redis) - ¡NUEVO!
+  redis_cache:
+    image: redis:alpine
+    container_name: redis_cache
+    ports:
+      - "6379:6379" # Mapea el puerto por defecto de Redis
+    networks:
+      - red_sistema_web # Lo conectamos a la misma red para que Apache pueda verlo
 
 # Volúmenes para persistencia de datos fuera de los contenedores
 volumes:
