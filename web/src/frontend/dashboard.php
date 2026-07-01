@@ -120,5 +120,64 @@ if ($res = $conn->query("SELECT COUNT(*) AS total_ubicaciones FROM ubicaciones")
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const canvas = document.getElementById('chartEstados');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const values = [
+                <?php echo intval($metricas['disponibles']); ?>,
+                <?php echo intval($metricas['prestados']); ?>,
+                <?php echo intval($metricas['mantenimiento']); ?>,
+                <?php echo intval($metricas['baja']); ?>
+            ];
+            const labels = ['Disponibles', 'Prestados', 'Mantenimiento', 'Baja'];
+            const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'];
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = { top: 30, right: 20, bottom: 80, left: 50 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+            const maxValue = Math.max(...values, 1);
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding.top + (chartHeight / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+            }
+
+            const barWidth = chartWidth / values.length * 0.7;
+            values.forEach(function (value, index) {
+                const x = padding.left + index * (chartWidth / values.length) + (chartWidth / values.length - barWidth) / 2;
+                const barHeight = (value / maxValue) * chartHeight;
+                const y = padding.top + chartHeight - barHeight;
+
+                ctx.fillStyle = colors[index];
+                ctx.fillRect(x, y, barWidth, barHeight);
+
+                ctx.fillStyle = '#334155';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[index], x + barWidth / 2, height - 40);
+                ctx.fillText(value, x + barWidth / 2, y - 8);
+            });
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Cantidad de activos por estado', padding.left, 18);
+        });
+    </script>
 </body>
 </html>

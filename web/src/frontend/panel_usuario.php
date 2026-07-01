@@ -26,13 +26,12 @@ require_once '../backend/conexion.php';
 // Obtener el ID del alumno que está viendo la página
 $id_alumno = intval($_SESSION['usuario_id']);
 
-// CONSULTA SQL FILTRADA: Traer solo los registros vigentes de este alumno
-// Nota: Aquí seleccionamos los movimientos donde el alumno está involucrado
-$sql_mis_equipos = "SELECT m.id, m.tipo_evento, m.fecha_registro, 
-                           a.nombre AS activo_nombre, a.numero_serie
+// CONSULTA SQL FILTRADA: Traer solo los equipos actualmente prestados a este usuario
+$sql_mis_equipos = "SELECT m.id, m.activo_id, m.tipo_evento, m.fecha_registro, 
+                           a.nombre AS activo_nombre, a.numero_serie, a.estado
                     FROM movimientos_activos m
                     INNER JOIN activos a ON m.activo_id = a.id
-                    WHERE m.usuario_id = $id_alumno
+                    WHERE m.usuario_id = $id_alumno AND a.estado = 'PRESTADO'
                     ORDER BY m.id DESC";
 
 $res_equipos = $conn->query($sql_mis_equipos);
@@ -91,6 +90,7 @@ if ($res_equipos) {
                             <th>Número de Serie</th>
                             <th>Tu Estatus</th>
                             <th>Fecha de Asignación</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -108,11 +108,17 @@ if ($res_equipos) {
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo htmlspecialchars($row['fecha_registro']); ?></td>
+                                    <td>
+                                        <form action="../backend/procesar_devolucion.php" method="POST" style="margin:0;">
+                                            <input type="hidden" name="activo_id" value="<?php echo intval($row['activo_id']); ?>">
+                                            <button type="submit" style="padding: 6px 12px; background:#16a34a; border:none; color:#fff; border-radius:4px; cursor:pointer;">Devolver</button>
+                                        </form>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="5" style="text-align: center; color: #94a3b8; padding: 30px;">
+                                <td colspan="6" style="text-align: center; color: #94a3b8; padding: 30px;">
                                     Actualmente no cuentas con ningún equipo prestado del inventario.
                                 </td>
                             </tr>

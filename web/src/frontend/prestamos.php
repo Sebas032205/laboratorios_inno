@@ -53,6 +53,27 @@ if ($datos_act) {
     }
 }
 
+// 4b. LÓGICA REDIS: Consultar ÚNICAMENTE los activos que estén 'PRESTADO'
+$activos_prestados = array();
+$datos_act_prestados = (isset($redis_disponible) && $redis_disponible) ? $redis->get('lista_activos_prestados') : false;
+
+if ($datos_act_prestados) {
+    $activos_prestados = json_decode($datos_act_prestados, true);
+} else {
+    $res_act_prestados = $conn->query("SELECT a.id, a.nombre, a.numero_serie, u.nombre AS usuario_nombre
+        FROM activos a
+        INNER JOIN movimientos_activos m ON m.activo_id = a.id
+        INNER JOIN usuarios u ON u.id = m.usuario_id
+        WHERE a.estado = 'PRESTADO' AND m.tipo_evento = 'PRESTAMO'
+        ORDER BY u.nombre ASC, a.nombre ASC");
+    if ($res_act_prestados) {
+        while ($r = $res_act_prestados->fetch_assoc()) $activos_prestados[] = $r;
+    }
+    if (isset($redis_disponible) && $redis_disponible) {
+        $redis->setex('lista_activos_prestados', 3600, json_encode($activos_prestados));
+    }
+}
+
 // 5. LÓGICA REDIS: Consultar el historial de movimientos (JOIN de 3 tablas)
 $lista_movimientos = array();
 $datos_movs = (isset($redis_disponible) && $redis_disponible) ? $redis->get('historial_movimientos') : false;
@@ -89,7 +110,7 @@ if ($datos_movs) {
         .form-row { display: flex; gap: 20px; margin-bottom: 15px; flex-wrap: wrap; }
         .form-field { flex: 1; min-width: 200px; display: flex; flex-direction: column; }
         .form-field label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        .form-field select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background: white; }
+        .form-field input, .form-field select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background: white; }
         .tabla-datos { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .tabla-datos th, .tabla-datos td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
         .tabla-datos th { background-color: #f8fafc; font-weight: bold; color: #334155; }
@@ -163,6 +184,30 @@ if ($datos_movs) {
                         <button type="submit" class="btn-primary" style="padding: 12px 25px; margin-top: 10px;">Autorizar Préstamo</button>
                     </form>
                 </div>
+
+                <div class="form-tarjeta">
+                    <h3>Registrar Devolución de Equipo</h3>
+                    <form action="../backend/procesar_devolucion.php" method="POST">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="buscarUsuarioDevolucion">Buscar por nombre del usuario:</label>
+                                <input type="text" id="buscarUsuarioDevolucion" placeholder="Escriba el nombre del usuario...">
+                            </div>
+                            <div class="form-field">
+                                <label for="activo_id_devuelto">Equipo actualmente prestado:</label>
+                                <select id="activo_id_devuelto" name="activo_id" required>
+                                    <option value="">-- Seleccione un activo prestado --</option>
+                                    <?php foreach ($activos_prestados as $act): ?>
+                                        <option value="<?php echo $act['id']; ?>">
+                                            <?php echo htmlspecialchars($act['nombre']); ?> [S/N: <?php echo htmlspecialchars($act['numero_serie']); ?>] - Usuario: <?php echo htmlspecialchars($act['usuario_nombre'] ?? ''); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 12px 25px; margin-top: 10px;">Registrar Devolución</button>
+                    </form>
+                </div>
                 <?php endif; ?>
 
                 <div class="tabla-tarjeta">
@@ -208,5 +253,39 @@ if ($datos_movs) {
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('buscarUsuarioDevolucion');
+            const select = document.getElementById('activo_id_devuelto');
+
+            if (!input || !select) return;
+
+            const options = Array.from(select.options);
+
+            input.addEventListener('keyup', function () {
+                const texto = this.value.toLowerCase().trim();
+                let opcionesVisibles = 0;
+
+                options.forEach(function (option) {
+                    if (!option.value) {
+                        option.hidden = false;
+                        return;
+                    }
+
+                    const textoOpcion = option.text.toLowerCase();
+                    const mostrar = texto === '' || textoOpcion.includes(texto);
+                    option.hidden = !mostrar;
+
+                    if (mostrar) {
+                        opcionesVisibles++;
+                    }
+                });
+
+                if (opcionesVisibles === 0) {
+                    select.value = '';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
